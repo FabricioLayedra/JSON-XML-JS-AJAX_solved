@@ -60,8 +60,6 @@ function cargarUsuarios() {
     });
 }
 
-$(document).ready(function() {
-    var users = document.getElementById("requerimiento");
-    users.click(cargarUsuarios());
-
+$('#requerimiento').click(function() {
+    cargarUsuarios());
 });
