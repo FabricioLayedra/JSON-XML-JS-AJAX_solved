@@ -1,56 +1,67 @@
-var http_request = false;
+function filtrar( event ){
 
-function makeRequest(url) {
+    /*Filtrado de los cantantes según el ritmo*/
 
-
-    http_request = false;
-
-    if (window.XMLHttpRequest) { // Mozilla, Safari,...
-        http_request = new XMLHttpRequest();
-        if (http_request.overrideMimeType) {
-            http_request.overrideMimeType('text/plain');
-            // Ver nota sobre esta linea al final
-        }
-    } else if (window.ActiveXObject) { // IE
-        try {
-            http_request = new ActiveXObject("Msxml2.XMLHTTP");
-        } catch (e) {
-            try {
-                http_request = new ActiveXObject("Microsoft.XMLHTTP");
-            } catch (e) {}
-        }
-    }
-
-    if (!http_request) {
-        alert('Falla :( No es posible crear una instancia XMLHTTP');
-        return false;
-    }
-    http_request.onreadystatechange = alertContents;
-    http_request.open('GET', url, true);
-    http_request.send(null);
-
+    let ritmo = event.data.ritmo.toLowerCase();
+    $('div#artistas > div').show();
+    $('div#artistas > div:not(.'+ritmo+')').hide()
+    return false;
 }
 
-function alertContents() {
-    if (http_request.readyState == 4) {
-        if (http_request.status == 200) {
-            var json=http_request.responseText;
-            var usuarios =JSON.parse(json);
-            let result =""
-            for(usuario of usuarios){
-                let name = usuario.nombre;
-                result +="<li> <a class ='user' href='#' >"+name+"</a></li>";
-            }
-            document.getElementById("lista-usuarios").innerHTML=result;
-        } else {
-            alert('Hubo problemas con la petición.');
-        }
-    }
+function cargarRitmos() {
+    
+
+    $.ajax({
+        url: 'servicios_basicos.xml',
+        error: function() {
+            alert('¡error al cargar el archivo con los ritmos!')
+        },
+        dataType: 'xml',
+        success: function(data) {
+            var ul = $('<ul></ul>')
+            ul.attr('class', 'lista-generos text-center');
+            $('#contenedor-generos').append(ul);
+
+            $(data).find('genero').each(function() {
+
+                var titulo = $(this).find('titulo').text();
+                var valorCantidad = $(this).find('canciones').text();
+                var cantidad = " (" + valorCantidad + ")";
+
+                let li = $('<li></li>');
+                let a = $('<a></a>');
+                a.attr('class', 'ritmos-latinos')
+                a.click({ritmo: titulo}, filtrar);
+
+                a.append(titulo)
+                li.append(a);
+                li.append(cantidad);
+                ul.append(li);
+
+            });
+
+        },
+        type: 'GET'
+    });
+}
+function cargarUsuarios() {
+
+    /*carga de artistas desde cantantes.json*/
+
+    $.getJSON("gastos_personales.json", function(data) {
+        $.each(data, function(key, val) {
+            let nombres = val["nombre"];
+            let li = $('<li></li>');
+            let a = $('<a href =""></a>');
+            a.append(nombres)
+            li.append(a)
+            $('#lista-usuarios').append(li);
+        });
+    });
 }
 
-window.onload = function() {
-    var link = document.getElementById('requerimiento');
-    link.onclick = function() {
-        makeRequest('gastos_personales.json');
-    }
-}
+$(document).ready(function() {
+    var users = document.getElementById("requerimiento");
+    users.click(cargarUsuarios());
+
+});
